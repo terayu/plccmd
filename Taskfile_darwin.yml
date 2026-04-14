@@ -1,0 +1,24 @@
+version: "3"
+vars:
+  BINARY: 'plccmd'
+  BINDIR: 'bin'
+  EXT: ''
+
+tasks:
+  default:
+    cmds:
+      - task --list-all
+  build:
+    desc: "execute build"
+    cmds:
+      - 'go build -tags timetzdata -o {{.BINDIR}}/{{.BINARY}}{{.EXT}} app/*.go'
+
+  buildwin:
+    desc: "execute build cross compile for windows"
+    env:
+      GOOS: windows
+      GOARCH: amd64
+    vars:
+      EXT: '.exe'
+    cmds:
+      - 'go build -tags timetzdata -o {{.BINDIR}}/{{.BINARY}}{{.EXT}} app/*.go'

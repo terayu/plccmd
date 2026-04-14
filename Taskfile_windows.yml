@@ -1,0 +1,14 @@
+version: "3"
+vars:
+  BINARY: 'plccmd'
+  BINDIR: 'bin'
+  EXT: '.exe'
+
+tasks:
+  default:
+    cmds:
+      - task --list-all
+  build:
+    desc: "execute build"
+    cmds:
+      - 'go build -tags timetzdata -o {{.BINDIR}}/{{.BINARY}}{{.EXT}} app/*.go'

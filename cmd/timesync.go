@@ -40,15 +40,15 @@ var TimeSyncCommand timeSyncCommand
 func init() {
 	TimeSyncCommand.fs = flag.NewFlagSet("timesync", flag.ExitOnError)
 	TimeSyncCommand.fs.StringVar(&TimeSyncCommand.Address, "address", "", "plc ip address")
-	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.DialTimeout, "dialtimeout", 5, "dial timeout (second)")
-	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.ReadTimeout, "readtimeout", 5, "read timeout (second)")
-	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.WriteTimeout, "writetimeout", 5, "write timeout (second)")
-	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.WaitTimeout, "waittimeout", 10, "wait timeout (second)")
-	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.NetworkNo, "networkno", 0, "network no")
-	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.PCNo, "pcno", 0, "pc no")
-	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.IONo, "iono", 0, "io no")
-	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.StationNo, "stationno", 0, "station no")
-	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.MonitorTimer, "monitortimer", 16, "monitor timer")
+	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.DialTimeout, "dialtimeout", 5, "dial timeout (sec)")
+	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.ReadTimeout, "readtimeout", 5, "read timeout (sec)")
+	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.WriteTimeout, "writetimeout", 5, "write timeout (sec)")
+	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.WaitTimeout, "waittimeout", 10, "wait timeout (sec)")
+	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.NetworkNo, "networkno", 0, "network no(not used in tcp)")
+	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.PCNo, "pcno", 0, "pc no(not used in tcp)")
+	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.IONo, "iono", 0, "io no(not used in tcp)")
+	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.StationNo, "stationno", 0, "station no(not used in tcp)")
+	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.MonitorTimer, "monitortimer", 16, "monitor timer(sec)")
 	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.YearD, "yeard", 0, "year device")
 	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.MonthD, "monthd", 0, "month device")
 	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.DayD, "dayd", 0, "day device")
@@ -66,11 +66,15 @@ func init() {
 		}
 	})
 }
+
 func (c *timeSyncCommand) Run(args []string) (err error) {
+	log.Println("trace: timeSyncCommand.Run")
 
 	if err = c.fs.Parse(args); err != nil {
 		return
 	}
+
+	c.debugPara()
 
 	validate := validator.New()
 	if err = validate.Struct(c); err != nil {
@@ -93,15 +97,16 @@ func (c *timeSyncCommand) Run(args []string) (err error) {
 		c.YearD, c.MonthD, c.DayD, c.HourD, c.MinuteD, c.SecondD, c.WdayD, c.ReqM); err != nil {
 		return
 	}
-
+	log.Println("info: time sync success")
 	return
 }
-func executeTimeSync(mcCfg mcprotocol.Config, waitTimeout time.Duration, yearD, monthD, dayD, hourD, minuteD, secondD, wdayD, reqM int) error {
+func executeTimeSync(mcCfg mcprotocol.Config, waitTimeout time.Duration, yearD, monthD, dayD, hourD, minuteD, secondD, wdayD, reqM int) (err error) {
+	log.Println("trace: timeSyncCommand.executeTimeSync")
 
-	//client, err := mcprotocol.NewTcpClient(mcCfg)
 	client, err := mcprotocol.NewUDPClient(mcCfg.Address, mcCfg.ReadTimeout)
 	if err != nil {
-		log.Fatalf("connect failed: %v", err)
+		log.Printf("err: connect failed: %v", err)
+		return
 	}
 	defer client.Close()
 
@@ -120,8 +125,30 @@ func executeTimeSync(mcCfg mcprotocol.Config, waitTimeout time.Duration, yearD, 
 	result, err := service.SyncNow(context.Background(), now, waitTimeout)
 	if err != nil {
 		log.Printf("err: time sync failed result:%+v", result)
-		return err
+		return
 	}
-	return nil
 
+	return
+
+}
+func (c *timeSyncCommand) debugPara() {
+	log.Printf("debug: address:%s", c.Address)
+	log.Printf("debug: dialtimeout:%d", c.DialTimeout)
+	log.Printf("debug: readtimeout:%d", c.ReadTimeout)
+	log.Printf("debug: writetimeout:%d", c.WriteTimeout)
+	log.Printf("debug: waittimeout:%d", c.WaitTimeout)
+	log.Printf("debug: networkno:%d", c.NetworkNo)
+	log.Printf("debug: pcno:%d", c.PCNo)
+	log.Printf("debug: iono:%d", c.IONo)
+	log.Printf("debug: stationno:%d", c.StationNo)
+	log.Printf("debug: monitortimer:%d", c.MonitorTimer)
+	log.Printf("debug: yeard:%d", c.YearD)
+	log.Printf("debug: monthd:%d", c.MonthD)
+	log.Printf("debug: dayd:%d", c.DayD)
+	log.Printf("debug: hourd:%d", c.HourD)
+	log.Printf("debug: minuted:%d", c.MinuteD)
+	log.Printf("debug: secondd:%d", c.SecondD)
+	log.Printf("debug: wdayd:%d", c.WdayD)
+	log.Printf("debug: reqm:%d", c.ReqM)
+	return
 }

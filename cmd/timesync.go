@@ -3,14 +3,15 @@ package cmd
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/terayu/plccmd/internal/mcprotocol"
 	"github.com/terayu/plccmd/internal/timesync"
+	"github.com/terayu/plccmd/mcprotocol"
 )
 
 type timeSyncCommand struct {
@@ -40,14 +41,14 @@ var TimeSyncCommand timeSyncCommand
 func init() {
 	TimeSyncCommand.fs = flag.NewFlagSet("timesync", flag.ExitOnError)
 	TimeSyncCommand.fs.StringVar(&TimeSyncCommand.Address, "address", "", "plc ip address")
-	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.DialTimeout, "dialtimeout", 5, "dial timeout (sec)")
+	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.DialTimeout, "dialtimeout", 5, "dial timeout (sec, tcp only)")
 	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.ReadTimeout, "readtimeout", 5, "read timeout (sec)")
 	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.WriteTimeout, "writetimeout", 5, "write timeout (sec)")
 	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.WaitTimeout, "waittimeout", 10, "wait timeout (sec)")
-	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.NetworkNo, "networkno", 0, "network no(not used in tcp)")
-	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.PCNo, "pcno", 0, "pc no(not used in tcp)")
-	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.IONo, "iono", 0, "io no(not used in tcp)")
-	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.StationNo, "stationno", 0, "station no(not used in tcp)")
+	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.NetworkNo, "networkno", 0, "network no")
+	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.PCNo, "pcno", 255, "pc no")
+	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.IONo, "iono", 1023, "io no")
+	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.StationNo, "stationno", 0, "station no")
 	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.MonitorTimer, "monitortimer", 16, "monitor timer(sec)")
 	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.YearD, "yeard", 0, "year device")
 	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.MonthD, "monthd", 0, "month device")
@@ -56,7 +57,7 @@ func init() {
 	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.MinuteD, "minuted", 0, "minute device")
 	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.SecondD, "secondd", 0, "second device")
 	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.WdayD, "wdayd", 0, "wday device")
-	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.ReqM, "reqm", 0, "request device (reqm+1 is success, reqm+2 is error)")
+	TimeSyncCommand.fs.IntVar(&TimeSyncCommand.ReqM, "reqm", 0, "request device (reqm+2 is success, reqm+3 is error)")
 
 	TimeSyncCommand.fs.VisitAll(func(f *flag.Flag) {
 		if v := os.Getenv(strings.ToUpper(f.Name)); v != "" {
@@ -103,7 +104,7 @@ func (c *timeSyncCommand) Run(args []string) (err error) {
 func executeTimeSync(mcCfg mcprotocol.Config, waitTimeout time.Duration, yearD, monthD, dayD, hourD, minuteD, secondD, wdayD, reqM int) (err error) {
 	log.Println("trace: timeSyncCommand.executeTimeSync")
 
-	client, err := mcprotocol.NewUDPClient(mcCfg.Address, mcCfg.ReadTimeout)
+	client, err := mcprotocol.NewUDPClient(mcCfg)
 	if err != nil {
 		log.Printf("err: connect failed: %v", err)
 		return
@@ -125,6 +126,11 @@ func executeTimeSync(mcCfg mcprotocol.Config, waitTimeout time.Duration, yearD, 
 	result, err := service.SyncNow(context.Background(), now, waitTimeout)
 	if err != nil {
 		log.Printf("err: time sync failed result:%+v", result)
+		return
+	}
+	if !result.Success {
+		err = fmt.Errorf("plc reported time sync failure: result:%+v", result)
+		log.Printf("err: %v", err)
 		return
 	}
 

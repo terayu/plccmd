@@ -2,19 +2,18 @@ package timesync
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
-	"github.com/terayu/plccmd/internal/mcprotocol"
+	"github.com/terayu/plccmd/mcprotocol"
 )
 
 type Service struct {
-	io      mcprotocol.WordReaderWriter
+	io      WordReaderWriter
 	devices Devices
 }
 
-func NewService(io mcprotocol.WordReaderWriter, devices Devices) *Service {
+func NewService(io WordReaderWriter, devices Devices) *Service {
 	return &Service{
 		io:      io,
 		devices: devices,
@@ -26,18 +25,18 @@ func (s *Service) SyncNow(ctx context.Context, t time.Time, waitTimeout time.Dur
 		return nil, err
 	}
 
-	if err := s.writeTime(t); err != nil {
+	if err := s.writeTime(ctx, t); err != nil {
 		return nil, err
 	}
 
-	if err := s.trigger(); err != nil {
+	if err := s.trigger(ctx); err != nil {
 		return nil, err
 	}
 
 	return s.waitCompletion(ctx, waitTimeout, t)
 }
 
-func (s *Service) writeTime(t time.Time) error {
+func (s *Service) writeTime(ctx context.Context, t time.Time) error {
 	values := []uint16{
 		uint16(t.Year()),
 		uint16(t.Month()),
@@ -48,11 +47,11 @@ func (s *Service) writeTime(t time.Time) error {
 		uint16(t.Weekday()),
 	}
 
-	return s.io.BatchWriteWords(mcprotocol.DeviceCodeD, s.devices.YearD, values)
+	return s.io.WriteWords(ctx, mcprotocol.DeviceD, s.devices.YearD, values)
 }
 
-func (s *Service) trigger() error {
-	return s.io.BatchWriteWords(mcprotocol.DeviceCodeM, s.devices.ReqM, []uint16{0x0001})
+func (s *Service) trigger(ctx context.Context) error {
+	return s.io.WriteWords(ctx, mcprotocol.DeviceM, s.devices.ReqM, []uint16{0x0001})
 }
 
 func (s *Service) waitCompletion(ctx context.Context, timeout time.Duration, requestTime time.Time) (*SyncResult, error) {
@@ -67,17 +66,17 @@ func (s *Service) waitCompletion(ctx context.Context, timeout time.Duration, req
 
 		case <-ticker.C:
 			if time.Now().After(deadline) {
-				return nil, errors.New("timeout waiting PLC to reset M100")
+				return nil, fmt.Errorf("timeout waiting PLC to reset M%d", s.devices.ReqM)
 			}
 
-			words, err := s.io.BatchReadWords(mcprotocol.DeviceCodeM, s.devices.ReqM, 1)
+			words, err := s.io.ReadWords(ctx, mcprotocol.DeviceM, s.devices.ReqM, 1)
 			if err != nil {
-				return nil, fmt.Errorf("read M100..M115 failed: %w", err)
+				return nil, fmt.Errorf("read M%d..M%d failed: %w", s.devices.ReqM, s.devices.ReqM+15, err)
 			}
 
 			// s.devices.ReqM is request sync
-			// s.devices.ReqM+1 is success time sync
-			// s.devices.ReqM+2 is error time sync
+			// s.devices.ReqM+2 is success time sync
+			// s.devices.ReqM+3 is error time sync
 			w := words[0]
 			requestFlag := (w & (1 << 0)) != 0
 			successFlag := (w & (1 << 2)) != 0
@@ -87,7 +86,7 @@ func (s *Service) waitCompletion(ctx context.Context, timeout time.Duration, req
 				return &SyncResult{
 					RequestTime: requestTime,
 					CompletedAt: time.Now(),
-					Success:     !errFlag && (successFlag || !errFlag),
+					Success:     successFlag && !errFlag,
 					ErrorFlag:   errFlag,
 				}, nil
 			}

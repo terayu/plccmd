@@ -1,6 +1,18 @@
 package timesync
 
-import "time"
+import (
+	"context"
+	"time"
+
+	"github.com/terayu/plccmd/mcprotocol"
+)
+
+// WordReaderWriter は時刻同期に必要なワードアクセスだけを切り出したもの。
+// mcprotocol.Client が満たす。
+type WordReaderWriter interface {
+	ReadWords(ctx context.Context, dev mcprotocol.DeviceCode, head uint32, points uint16) ([]uint16, error)
+	WriteWords(ctx context.Context, dev mcprotocol.DeviceCode, head uint32, values []uint16) error
+}
 
 type Devices struct {
 	YearD   uint32

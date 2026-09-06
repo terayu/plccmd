@@ -108,7 +108,7 @@ type SyncResult struct {
 
 ## デバイス割り付け例
 
-`testdata/config.yaml` と同じ割り付けの場合です。
+以下の割り付けの場合です。
 
 | デバイス | 用途 |
 |---|---|

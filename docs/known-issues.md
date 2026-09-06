@@ -221,8 +221,6 @@ return s.io.BatchWriteWords(mcprotocol.DeviceCodeD, s.devices.YearD, values)
 
 | 対象 | 状況 |
 |---|---|
-| `internal/config` パッケージ | `Load` / `Validate` / `Must*Timeout` すべて未参照。CLI は設定ファイルを読まない |
-| `testdata/config.yaml` | 上記に対応するサンプル。参照元なし |
 | `mcprotocol.TCPClient` | CLI からは未使用（公開パッケージなので外部利用は可能）。UDP と違い要求／応答を対応付けられる |
 
 ## 軽微な整理候補

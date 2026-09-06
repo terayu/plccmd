@@ -16,13 +16,9 @@ plccmd/
 │   ├── tcpClient.go         TCP トランスポート
 │   └── udpClient.go         UDP トランスポート（timesync が使う）
 ├── internal/
-│   ├── timesync/            時刻同期の業務ロジック
-│   │   ├── types.go         Devices / SyncResult / WordReaderWriter
-│   │   └── service.go       SyncNow（書き込み→トリガ→完了待ち）
-│   └── config/
-│       └── config.go        YAML 設定の読み込みと検証（※現状未使用）
-├── testdata/
-│   └── config.yaml          YAML 設定のサンプル（※現状未使用）
+│   └── timesync/            時刻同期の業務ロジック
+│       ├── types.go         Devices / SyncResult / WordReaderWriter
+│       └── service.go       SyncNow（書き込み→トリガ→完了待ち）
 ├── bin/                     ビルド成果物
 ├── Taskfile.yml             OS 別 Taskfile の取り込み
 ├── Taskfile_darwin.yml      macOS 用ビルドタスク（build / buildwin）

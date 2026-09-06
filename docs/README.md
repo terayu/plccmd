@@ -63,7 +63,7 @@ require github.com/terayu/plccmd v0.0.0
 replace github.com/terayu/plccmd => ../plccmd
 ```
 
-`internal/timesync` と `internal/config` は `internal/` 配下のため、外部からは参照できません。
+`internal/timesync` は `internal/` 配下のため、外部からは参照できません。
 
 ## テスト
 
@@ -109,4 +109,12 @@ PLCCMD_E2E_ADDRESS=192.168.1.10:5002 go test ./cmd/ -run RealPLC -v
 | `github.com/comail/colog` | ログ出力（レベルはメッセージ接頭辞で指定） |
 | `gopkg.in/natefinch/lumberjack.v2` | ログファイルのローテーション |
 | `github.com/go-playground/validator/v10` | コマンド引数の必須チェック |
-| `gopkg.in/yaml.v3` | YAML 設定の読み込み（現状未使用） |
+
+バイナリにリンクされる依存はすべて MIT または BSD-3-Clause です。全文は
+[THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) に収録しています。
+
+ライブラリとして `mcprotocol` パッケージのみを利用する場合、外部依存はありません（Go 標準ライブラリのみ）。
+
+## ライセンス
+
+MIT License です。詳細は [LICENSE](../LICENSE) を参照してください。

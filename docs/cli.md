@@ -139,28 +139,8 @@ plccmd timesync
 
 ### 設定ファイル
 
-`internal/config` に YAML 設定のローダがあり、`testdata/config.yaml` にサンプルがありますが、**CLI からは読み込まれていません**。現状の設定手段はフラグと環境変数のみです。
+設定ファイルには対応していません。設定手段はフラグと環境変数のみです。
 
-```yaml
-plc:
-  address: "192.168.1.10:5002"
-  dial_timeout: "5s"
-  read_timeout: "5s"
-  write_timeout: "5s"
-  wait_timeout: "10s"
-  route:
-    network_no: 0
-    pc_no: 255
-    io_no: 1023
-    station_no: 0
-    monitor_timer: 16
-devices:
-  year_d: 100
-  month_d: 101
-  day_d: 102
-  hour_d: 103
-  minute_d: 104
-  second_d: 105
-  wday_d: 106
-  req_m: 100
-```
+以前は `internal/config` に未使用の YAML ローダがありましたが、CLI から参照されておらず、
+唯一の `gopkg.in/yaml.v3` 依存でもあったため削除しました。
+

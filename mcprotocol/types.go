@@ -48,6 +48,13 @@ type Client interface {
 }
 
 // EndCodeError は PLC が 0 以外の終了コードを返したことを表す。
+//
+// Error はポインタレシーバなので、判別には *EndCodeError を渡す。
+//
+//	var ece *mcprotocol.EndCodeError
+//	if errors.As(err, &ece) {
+//		log.Printf("PLC error 0x%04X", ece.Code)
+//	}
 type EndCodeError struct {
 	Code uint16
 }

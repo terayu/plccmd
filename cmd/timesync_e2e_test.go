@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -21,7 +22,13 @@ func TestMain(m *testing.M) {
 	}
 	defer os.RemoveAll(dir)
 
-	binPath = filepath.Join(dir, "plccmd")
+	// go build -o は拡張子を補わないので、Windows では自分で付ける。
+	// 付けないと exec.Command が PATHEXT で解決できず起動に失敗する。
+	name := "plccmd"
+	if runtime.GOOS == "windows" {
+		name += ".exe"
+	}
+	binPath = filepath.Join(dir, name)
 	build := exec.Command("go", "build", "-tags", "timetzdata", "-o", binPath, "./app")
 	build.Dir = ".."
 	if out, err := build.CombinedOutput(); err != nil {

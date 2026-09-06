@@ -64,7 +64,7 @@ func envUint32(t *testing.T, key string, def uint32) uint32 {
 
 func (p realPLC) client(t *testing.T) mcprotocol.Client {
 	t.Helper()
-	c, err := mcprotocol.NewUDPClient(mcprotocol.DefaultConfig(p.address))
+	c, err := mcprotocol.NewUDPClient(context.Background(), mcprotocol.DefaultConfig(p.address))
 	if err != nil {
 		t.Fatalf("PLC に接続できない (%s): %v", p.address, err)
 	}

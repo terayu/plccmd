@@ -57,7 +57,7 @@ log.Printf("info: logfile: %s\n", abs)
 **2026-09-05 対応**: `NewUDPClient` が `Config` を受け取るようになり、`-networkno` / `-pcno` / `-iono` / `-stationno` / `-monitortimer` が反映されるようになりました。
 
 ```go
-client, err := mcprotocol.NewUDPClient(mcCfg)
+client, err := mcprotocol.NewUDPClient(ctx, mcCfg)
 ```
 
 修正前は `mcprotocol.Config` を組み立てても `NewUDPClient(mcCfg.Address, mcCfg.ReadTimeout)` としか呼んでおらず、`UDPClient` のコンストラクタ内固定値が使われていました。

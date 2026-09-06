@@ -15,8 +15,13 @@ type TCPClient struct {
 
 var _ Client = (*TCPClient)(nil)
 
-func NewTCPClient(cfg Config) (*TCPClient, error) {
-	conn, err := net.DialTimeout("tcp", cfg.Address, cfg.DialTimeout)
+// NewTCPClient は cfg.Address へ TCP 接続を確立する。
+//
+// 接続の確立は ctx でキャンセルできる。cfg.DialTimeout と ctx の期限のうち
+// 早いほうが締切になる。cfg.DialTimeout が 0 なら ctx の期限だけが効く。
+func NewTCPClient(ctx context.Context, cfg Config) (*TCPClient, error) {
+	d := net.Dialer{Timeout: cfg.DialTimeout}
+	conn, err := d.DialContext(ctx, "tcp", cfg.Address)
 	if err != nil {
 		return nil, err
 	}

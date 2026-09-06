@@ -2,6 +2,7 @@ package mcprotocol
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"net"
 	"testing"
@@ -73,7 +74,7 @@ func TestPackUnpackBits(t *testing.T) {
 // ビット単位書き込みのフレームがバイト単位で仕様どおりであること
 func TestWriteBitsRequestFrame(t *testing.T) {
 	plc := newRecordingPLC(t, okResponse)
-	c, err := NewUDPClient(DefaultConfig(plc.addr))
+	c, err := NewUDPClient(context.Background(), DefaultConfig(plc.addr))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -107,7 +108,7 @@ func TestWriteBitsRequestFrame(t *testing.T) {
 func TestReadBitsResponse(t *testing.T) {
 	resp := []byte{0xD0, 0x00, 0x00, 0xFF, 0xFF, 0x03, 0x00, 0x04, 0x00, 0x00, 0x00, 0x10, 0x10}
 	plc := newRecordingPLC(t, resp)
-	c, err := NewUDPClient(DefaultConfig(plc.addr))
+	c, err := NewUDPClient(context.Background(), DefaultConfig(plc.addr))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -127,7 +128,7 @@ func TestReadBitsResponse(t *testing.T) {
 
 // ワードデバイスへのビットアクセスは通信前に弾かれること
 func TestBitAccessOnWordDevice(t *testing.T) {
-	c, err := NewUDPClient(DefaultConfig("127.0.0.1:1"))
+	c, err := NewUDPClient(context.Background(), DefaultConfig("127.0.0.1:1"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -150,7 +151,7 @@ func TestBitAccessOnWordDevice(t *testing.T) {
 }
 
 func TestValidation(t *testing.T) {
-	c, err := NewUDPClient(DefaultConfig("127.0.0.1:1"))
+	c, err := NewUDPClient(context.Background(), DefaultConfig("127.0.0.1:1"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -174,7 +175,7 @@ func TestValidation(t *testing.T) {
 func TestEndCodeError(t *testing.T) {
 	resp := []byte{0xD0, 0x00, 0x00, 0xFF, 0xFF, 0x03, 0x00, 0x02, 0x00, 0x51, 0xC0}
 	plc := newRecordingPLC(t, resp)
-	c, err := NewUDPClient(DefaultConfig(plc.addr))
+	c, err := NewUDPClient(context.Background(), DefaultConfig(plc.addr))
 	if err != nil {
 		t.Fatal(err)
 	}

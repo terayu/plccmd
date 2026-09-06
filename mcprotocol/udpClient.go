@@ -14,19 +14,18 @@ import (
 // TCPClient を使うこと。
 type UDPClient struct {
 	client
-	conn *net.UDPConn
+	conn net.Conn
 }
 
 var _ Client = (*UDPClient)(nil)
 
-// NewUDPClient は cfg の宛先へ UDP ソケットを開く。cfg.DialTimeout は使用しない。
-func NewUDPClient(cfg Config) (*UDPClient, error) {
-	udpAddr, err := net.ResolveUDPAddr("udp", cfg.Address)
-	if err != nil {
-		return nil, err
-	}
-
-	conn, err := net.DialUDP("udp", nil, udpAddr)
+// NewUDPClient は cfg.Address 宛ての UDP ソケットを開く。
+//
+// UDP にハンドシェイクは無いため、ここでブロックしうるのは名前解決だけである。
+// ctx と cfg.DialTimeout はその名前解決に効く。
+func NewUDPClient(ctx context.Context, cfg Config) (*UDPClient, error) {
+	d := net.Dialer{Timeout: cfg.DialTimeout}
+	conn, err := d.DialContext(ctx, "udp", cfg.Address)
 	if err != nil {
 		return nil, err
 	}

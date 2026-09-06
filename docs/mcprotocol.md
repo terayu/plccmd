@@ -9,16 +9,15 @@ import "github.com/terayu/plccmd/mcprotocol"
 ## 使い方
 
 ```go
+ctx := context.Background()
 cfg := mcprotocol.DefaultConfig("192.168.1.10:5002")
 
 var c mcprotocol.Client
-c, err := mcprotocol.NewUDPClient(cfg)   // TCP なら NewTCPClient(cfg)
+c, err := mcprotocol.NewUDPClient(ctx, cfg)   // TCP なら NewTCPClient(ctx, cfg)
 if err != nil {
     log.Fatal(err)
 }
 defer c.Close()
-
-ctx := context.Background()
 
 words, err := c.ReadWords(ctx, mcprotocol.DeviceD, 100, 7)   // D100〜D106
 bits,  err := c.ReadBits(ctx, mcprotocol.DeviceM, 100, 4)    // M100〜M103
@@ -42,7 +41,7 @@ type Client interface {
 
 `head` は**デバイス番号をそのまま 10 進で**渡します。X/Y/B/W/ZR など三菱の表記が 16 進のデバイスは、変換後の値が必要です（`X10` なら `16`、Go のリテラルなら `0x10` と書けます）。
 
-`ctx` は期限の算出に使われ、`Config` のタイムアウトと ctx の期限のうち**早いほう**が締切になります。送信前にキャンセル済みかを確認しますが、**I/O 実行中の割り込みはしません**（打ち切りは締切による）。
+コンストラクタに渡した `ctx` は接続の確立をキャンセルできます。読み書きの各メソッドでは `ctx` は期限の算出に使われ、`Config` のタイムアウトと ctx の期限のうち**早いほう**が締切になります。送信前にキャンセル済みかを確認しますが、**I/O 実行中の割り込みはしません**（打ち切りは締切による）。
 
 ## `Config`
 

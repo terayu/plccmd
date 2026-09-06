@@ -104,7 +104,9 @@ func (c *timeSyncCommand) Run(args []string) (err error) {
 func executeTimeSync(mcCfg mcprotocol.Config, waitTimeout time.Duration, yearD, monthD, dayD, hourD, minuteD, secondD, wdayD, reqM int) (err error) {
 	log.Println("trace: timeSyncCommand.executeTimeSync")
 
-	client, err := mcprotocol.NewUDPClient(mcCfg)
+	ctx := context.Background()
+
+	client, err := mcprotocol.NewUDPClient(ctx, mcCfg)
 	if err != nil {
 		log.Printf("err: connect failed: %v", err)
 		return
@@ -123,7 +125,7 @@ func executeTimeSync(mcCfg mcprotocol.Config, waitTimeout time.Duration, yearD, 
 	})
 
 	now := time.Now()
-	result, err := service.SyncNow(context.Background(), now, waitTimeout)
+	result, err := service.SyncNow(ctx, now, waitTimeout)
 	if err != nil {
 		log.Printf("err: time sync failed result:%+v", result)
 		return

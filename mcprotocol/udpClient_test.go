@@ -32,7 +32,7 @@ func newClient(t *testing.T, addr string) *UDPClient {
 	t.Helper()
 	cfg := DefaultConfig(addr)
 	cfg.ReadTimeout = 2 * time.Second
-	c, err := NewUDPClient(cfg)
+	c, err := NewUDPClient(context.Background(), cfg)
 	if err != nil {
 		t.Fatal(err)
 	}

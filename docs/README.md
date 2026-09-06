@@ -44,7 +44,7 @@ go build -tags timetzdata -o bin/plccmd app/*.go
 import "github.com/terayu/plccmd/mcprotocol"
 
 cfg := mcprotocol.DefaultConfig("192.168.1.10:5002")
-c, err := mcprotocol.NewUDPClient(cfg)   // TCP なら NewTCPClient(cfg)
+c, err := mcprotocol.NewUDPClient(ctx, cfg)   // TCP なら NewTCPClient(ctx, cfg)
 defer c.Close()
 
 words, err := c.ReadWords(ctx, mcprotocol.DeviceD, 100, 7)

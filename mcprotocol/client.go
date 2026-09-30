@@ -22,7 +22,7 @@ func (c *client) ReadWords(ctx context.Context, dev DeviceCode, head uint32, poi
 	if err := validateDevice(dev, false); err != nil {
 		return nil, err
 	}
-	if err := validatePoints(points, MaxWordPoints); err != nil {
+	if err := validatePoints(int(points), MaxWordPoints); err != nil {
 		return nil, err
 	}
 
@@ -46,7 +46,7 @@ func (c *client) WriteWords(ctx context.Context, dev DeviceCode, head uint32, va
 	if err := validateDevice(dev, false); err != nil {
 		return err
 	}
-	if err := validatePoints(uint16(len(values)), MaxWordPoints); err != nil {
+	if err := validatePoints(len(values), MaxWordPoints); err != nil {
 		return err
 	}
 
@@ -62,7 +62,7 @@ func (c *client) ReadBits(ctx context.Context, dev DeviceCode, head uint32, poin
 	if err := validateDevice(dev, true); err != nil {
 		return nil, err
 	}
-	if err := validatePoints(points, MaxBitPoints); err != nil {
+	if err := validatePoints(int(points), MaxBitPoints); err != nil {
 		return nil, err
 	}
 
@@ -81,7 +81,7 @@ func (c *client) WriteBits(ctx context.Context, dev DeviceCode, head uint32, val
 	if err := validateDevice(dev, true); err != nil {
 		return err
 	}
-	if err := validatePoints(uint16(len(values)), MaxBitPoints); err != nil {
+	if err := validatePoints(len(values), MaxBitPoints); err != nil {
 		return err
 	}
 
@@ -109,7 +109,7 @@ func validateDevice(dev DeviceCode, bitAccess bool) error {
 	return nil
 }
 
-func validatePoints(points, max uint16) error {
+func validatePoints(points, max int) error {
 	if points == 0 {
 		return errors.New("points must be > 0")
 	}

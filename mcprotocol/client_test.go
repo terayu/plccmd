@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"net"
+	"strings"
 	"testing"
 	"time"
 )
@@ -168,6 +169,23 @@ func TestValidation(t *testing.T) {
 	}
 	if _, err := c.ReadBits(ctx, DeviceM, 0, MaxBitPoints+1); err == nil {
 		t.Fatal("ビット点数の上限超過がエラーにならなかった")
+	}
+}
+
+// 書き込み点数が uint16 を超えても、切り詰められずに上限超過として弾かれること
+func TestWriteTooManyPointsNoWrap(t *testing.T) {
+	c, err := NewUDPClient(context.Background(), DefaultConfig("127.0.0.1:1"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+
+	// 65537 要素は uint16 に切り詰めると 1 点になる
+	if err := c.WriteWords(ctx, DeviceD, 0, make([]uint16, 65537)); err == nil || !strings.Contains(err.Error(), "too many points") {
+		t.Fatalf("ワード書き込みの点数超過が検出されなかった: %v", err)
+	}
+	if err := c.WriteBits(ctx, DeviceM, 0, make([]bool, 65537)); err == nil || !strings.Contains(err.Error(), "too many points") {
+		t.Fatalf("ビット書き込みの点数超過が検出されなかった: %v", err)
 	}
 }
 

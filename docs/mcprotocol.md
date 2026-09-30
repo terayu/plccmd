@@ -23,6 +23,8 @@ words, err := c.ReadWords(ctx, mcprotocol.DeviceD, 100, 7)   // D100〜D106
 bits,  err := c.ReadBits(ctx, mcprotocol.DeviceM, 100, 4)    // M100〜M103
 err = c.WriteWords(ctx, mcprotocol.DeviceZR, 0, []uint16{1, 2, 3})
 err = c.WriteBits(ctx, mcprotocol.DeviceY, 0x20, []bool{true, false})
+dw, err := mcprotocol.ReadDWords(ctx, c, mcprotocol.DeviceD, 200, 2)          // D200〜D203
+err = mcprotocol.WriteDWords(ctx, c, mcprotocol.DeviceD, 200, []uint32{70000})
 ```
 
 ## `Client` インターフェース
@@ -42,6 +44,19 @@ type Client interface {
 `head` は**デバイス番号をそのまま 10 進で**渡します。X/Y/B/W/ZR など三菱の表記が 16 進のデバイスは、変換後の値が必要です（`X10` なら `16`、Go のリテラルなら `0x10` と書けます）。
 
 コンストラクタに渡した `ctx` は接続の確立をキャンセルできます。読み書きの各メソッドでは `ctx` は期限の算出に使われ、`Config` のタイムアウトと ctx の期限のうち**早いほう**が締切になります。送信前にキャンセル済みかを確認しますが、**I/O 実行中の割り込みはしません**（打ち切りは締切による）。
+
+## ダブルワード（32bit）
+
+```go
+func ReadDWords(ctx context.Context, c Client, dev DeviceCode, head uint32, points uint16) ([]uint32, error)
+func WriteDWords(ctx context.Context, c Client, dev DeviceCode, head uint32, values []uint32) error
+```
+
+`Client` のメソッドではなくパッケージ関数です。`Client` にメソッドを足すと既存の実装やモックが壊れるため、`ReadWords` / `WriteWords` の上に組み立てています。
+
+- 1 点は 2 ワードで、**下位ワードが先**です（`D200` が下位、`D201` が上位）。この並びは PLC 側の格納規約に依存するため、相手機器が異なる順序なら実機で確認してください。
+- 1 回の要求で読み書きするため、上位と下位は同じ要求の中で処理されます。
+- 符号付きで扱うときは `int32(v)` で変換します。
 
 ## `Config`
 
@@ -116,6 +131,7 @@ if errors.As(err, &ece) {
 |---|---|
 | ワード単位 | 960 点（`MaxWordPoints`） |
 | ビット単位 | 3584 点（`MaxBitPoints`） |
+| ダブルワード | 480 点（`MaxWordPoints/2`） |
 
 上限超過と 0 点は、通信する前にエラーになります。
 
